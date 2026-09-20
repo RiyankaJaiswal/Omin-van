@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OmniVan Nostalgia — School Din, Wahi Gaana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14110c;
+    --ink-2: #1c1810;
+    --mustard: #e3a63d;
+    --mustard-dim: #a97a2c;
+    --indigo: #333a5c;
+    --rust: #c1633b;
+    --cream: #f3ead8;
+    --moss: #7c8a5a;
+    --line: rgba(243,234,216,0.14);
+    --font-display: 'Baloo 2', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+    --font-ui: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]) {
+    --surface: var(--ink);
+    --surface-2: var(--ink-2);
+    --text: var(--cream);
+    --text-dim: rgba(243,234,216,0.62);
+  }
+  :root[data-theme="light"] {
+    --surface: var(--ink);
+    --surface-2: var(--ink-2);
+    --text: var(--cream);
+    --text-dim: rgba(243,234,216,0.62);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface: var(--ink);
+      --surface-2: var(--ink-2);
+      --text: var(--cream);
+      --text-dim: rgba(243,234,216,0.62);
+    }
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    height: 100%;
+    min-height: 100svh;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-ui);
+    overflow: hidden;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- Mood scene layers (the "background video") ---------- */
+  #stage {
+    position: fixed; inset: 0; overflow: hidden; z-index: 0;
+  }
+  .scene {
+    position: absolute; inset: -2%; width: 104%; height: 104%;
+    opacity: 0; transition: opacity 1.6s ease;
+    will-change: opacity;
+  }
+  .scene.active { opacity: 1; }
+  .scene svg { width: 100%; height: 100%; display: block; }
+  #grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    opacity: 0.05; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  #vignette {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(10,8,5,0.55) 100%);
+  }
+
+  /* ---------- Top bar: clock + passenger counter ---------- */
+  .topbar {
+    position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 0 18px; z-index: 5; pointer-events: none;
+  }
+  .chip {
+    pointer-events: auto;
+    background: rgba(20,17,12,0.5);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 9px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .chip strong { color: var(--text); font-weight: 700; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--moss); box-shadow: 0 0 0 0 rgba(124,138,90,0.6); animation: pulse-dot 2.2s infinite; }
+  @keyframes pulse-dot { 0%{box-shadow:0 0 0 0 rgba(124,138,90,0.55);} 70%{box-shadow:0 0 0 7px rgba(124,138,90,0);} 100%{box-shadow:0 0 0 0 rgba(124,138,90,0);} }
+  #passenger-count.bump { animation: bump 0.4s ease; }
+  @keyframes bump { 0%{transform:scale(1);} 40%{transform:scale(1.18); color: var(--mustard);} 100%{transform:scale(1);} }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: fixed; inset: 0; z-index: 4;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 0 24px; pointer-events: none;
+  }
+  .hero .kicker {
+    font-size: 13px; letter-spacing: 0.02em; color: var(--mustard);
+    font-weight: 700; margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 9vw, 5.2rem);
+    line-height: 0.98;
+    margin: 0;
+    color: var(--cream);
+    text-shadow: 0 6px 40px rgba(0,0,0,0.5);
+  }
+  .hero p.sub {
+    margin-top: 14px;
+    font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+    color: var(--text-dim);
+    max-width: 480px;
+  }
+  .hero .cta {
+    margin-top: 30px; pointer-events: auto;
+    background: var(--mustard); color: #241a08;
+    border: none; border-radius: 999px;
+    font-family: var(--font-ui); font-weight: 800; font-size: 15px;
+    padding: 15px 30px; cursor: pointer;
+    box-shadow: 0 10px 30px rgba(227,166,61,0.28);
+    transition: transform 0.15s ease;
+  }
+  .hero .cta:active { transform: scale(0.96); }
+  .hero.hidden { display: none; }
+
+  /* ---------- Now playing card (shown once riding) ---------- */
+  #nowplaying {
+    position: fixed; left: 0; right: 0; top: 0; bottom: 0;
+    z-index: 4; display: none;
+    flex-direction: column; align-items: center; justify-content: flex-end;
+    padding: 0 20px calc(190px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none; text-align: center;
+  }
+  #nowplaying.show { display: flex; }
+  #np-movie { font-size: 12px; color: var(--text-dim); letter-spacing: 0.02em; }
+  #np-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(1.4rem, 5vw, 2.1rem); color: var(--cream); margin: 4px 0 2px;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  #np-artist { font-size: 13px; color: var(--text-dim); }
+  #np-mood {
+    margin-top: 10px; font-size: 11px; color: var(--mustard);
+    text-transform: lowercase; letter-spacing: 0.02em;
+  }
+
+  /* ---------- Dock ---------- */
+  #dock {
+    position: fixed; left: 12px; right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 10; background: rgba(20,17,12,0.72);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px; padding: 12px 14px;
+    max-width: 480px; margin: 0 auto;
+  }
+  .dock-row { display: flex; align-items: center; gap: 10px; }
+  .dock-info { flex: 1; min-width: 0; }
+  .dock-info .t { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dock-info .s { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .iconbtn {
+    background: transparent; border: none; color: var(--cream); cursor: pointer;
+    width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.15s ease;
+  }
+  .iconbtn:active { background: rgba(255,255,255,0.08); }
+  #playbtn { background: var(--mustard); color: #241a08; width: 46px; height: 46px; }
+  #playbtn:active { background: var(--mustard-dim); }
+  #progress-wrap { height: 3px; background: var(--line); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  #progress-bar { height: 100%; width: 0%; background: var(--mustard); transition: width 0.2s linear; }
+  #drawer-toggle {
+    display: flex; justify-content: center; padding-top: 6px; cursor: pointer;
+  }
+  #drawer-toggle .handle { width: 34px; height: 4px; border-radius: 3px; background: var(--line); }
+
+  #drawer {
+    max-height: 0; overflow: hidden; transition: max-height 0.35s ease;
+  }
+  #drawer.open { max-height: 62vh; overflow-y: auto; }
+  .drawer-inner { padding-top: 14px; }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 14px 4px 8px; }
+  .track {
+    display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-radius: 12px; cursor: pointer;
+  }
+  .track:active { background: rgba(255,255,255,0.06); }
+  .track.playing { background: rgba(227,166,61,0.12); }
+  .track .num { width: 22px; text-align: center; font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+  .track.playing .num { color: var(--mustard); }
+  .track .meta { flex: 1; min-width: 0; }
+  .track .meta .tt { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track .meta .mm { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge {
+    font-size: 9.5px; padding: 3px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); flex-shrink: 0;
+  }
+  .badge.ready { color: var(--moss); border-color: rgba(124,138,90,0.4); }
+
+  .volrow { display: flex; align-items: center; gap: 8px; padding: 4px 6px 2px; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; height: 3px; flex: 1; background: var(--line); border-radius: 3px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--mustard); cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: var(--mustard); border: none; cursor: pointer; }
+
+  .custom-url {
+    display: flex; gap: 8px; padding: 4px 6px 10px;
+  }
+  .custom-url input {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-family: var(--font-ui);
+  }
+  .custom-url input::placeholder { color: var(--text-dim); }
+  .custom-url button {
+    background: var(--indigo); color: var(--cream); border: none; border-radius: 10px;
+    padding: 0 14px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+  }
+  .hint { font-size: 11px; color: var(--text-dim); padding: 0 6px 10px; line-height: 1.5; }
+
+  #yt-mount { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(190px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(10px);
+    background: var(--indigo); color: var(--cream); padding: 10px 16px; border-radius: 12px;
+    font-size: 12.5px; opacity: 0; transition: all 0.25s ease; z-index: 20; pointer-events: none;
+    max-width: 320px; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene, .dot, #passenger-count.bump { animation: none !important; transition: none !important; }
+  }
+
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <!-- SUNSET -->
+  <div class="scene" data-mood="sunset">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skySun" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2c2140"/>
+          <stop offset="45%" stop-color="#6a3e4e"/>
+          <stop offset="75%" stop-color="#c1633b"/>
+          <stop offset="100%" stop-color="#e3a63d"/>
+        </linearGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#skySun)"/>
+      <circle cx="400" cy="380" r="90" fill="#f3ead8" opacity="0.9">
+        <animate attributeName="cy" values="380;370;380" dur="10s" repeatCount="indefinite"/>
+      </circle>
+      <rect x="0" y="470" width="800" height="130" fill="#14110c" opacity="0.85"/>
+      <path d="M0 470 Q400 430 800 470 L800 500 Q400 460 0 500 Z" fill="#1c1810"/>
+      <g opacity="0.5">
+        <circle cx="120" cy="200" r="1.5" fill="#f3ead8"/>
+        <circle cx="640" cy="150" r="1.2" fill="#f3ead8"/>
+        <circle cx="720" cy="240" r="1" fill="#f3ead8"/>
+        <circle cx="60" cy="280" r="1" fill="#f3ead8"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- RAIN -->
+  <div class="scene" data-mood="rain">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skyRain" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#181c2e"/>
+          <stop offset="100%" stop-color="#333a5c"/>
+        </linearGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#skyRain)"/>
+      <g stroke="#cfd6ea" stroke-width="1.4" opacity="0.35">
+        <line x1="60" y1="-20" x2="30" y2="120"><animate attributeName="y1" values="-20;620" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y2" values="120;760" dur="1.1s" repeatCount="indefinite"/></line>
+        <line x1="180" y1="-40" x2="150" y2="100"><animate attributeName="y1" values="-40;600" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y2" values="100;740" dur="0.9s" repeatCount="indefinite"/></line>
+        <line x1="330" y1="-10" x2="300" y2="130"><animate attributeName="y1" values="-10;630" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y2" values="130;770" dur="1.3s" repeatCount="indefinite"/></line>
+        <line x1="480" y1="-60" x2="450" y2="80"><animate attributeName="y1" values="-60;580" dur="1s" repeatCount="indefinite"/><animate attributeName="y2" values="80;720" dur="1s" repeatCount="indefinite"/></line>
+        <line x1="600" y1="-30" x2="570" y2="110"><animate attributeName="y1" values="-30;610" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y2" values="110;750" dur="1.2s" repeatCount="indefinite"/></line>
+        <line x1="710" y1="-15" x2="680" y2="125"><animate attributeName="y1" values="-15;625" dur="0.95s" repeatCount="indefinite"/><animate attributeName="y2" values="125;765" dur="0.95s" repeatCount="indefinite"/></line>
+      </g>
+      <rect x="0" y="480" width="800" height="120" fill="#14110c" opacity="0.8"/>
+      <circle cx="120" cy="500" r="30" fill="#e3a63d" opacity="0.15"/>
+      <circle cx="680" cy="510" r="24" fill="#e3a63d" opacity="0.12"/>
+    </svg>
+  </div>
+
+  <!-- EYES -->
+  <div class="scene" data-mood="eyes">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="bgEyes" cx="50%" cy="45%" r="70%">
+          <stop offset="0%" stop-color="#3a2f4a"/>
+          <stop offset="100%" stop-color="#14110c"/>
+        </radialGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#bgEyes)"/>
+      <g transform="translate(400,300)">
+        <path d="M-160,0 Q-90,-70 0,-58 Q90,-70 160,0 Q90,64 0,58 Q-90,64 -160,0 Z" fill="none" stroke="#e3a63d" stroke-width="2.5" opacity="0.8"/>
+        <circle cx="0" cy="2" r="34" fill="#c1633b" opacity="0.85">
+          <animate attributeName="r" values="34;30;34" dur="4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="0" cy="2" r="15" fill="#14110c"/>
+        <circle cx="8" cy="-6" r="5" fill="#f3ead8" opacity="0.8"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ROAD -->
+  <div class="scene active" data-mood="road">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skyRoad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a3320"/>
+          <stop offset="60%" stop-color="#9c6b34"/>
+          <stop offset="100%" stop-color="#e3a63d"/>
+        </linearGradient>
+      </defs>
+      <rect width="800" height="600" fill="url(#skyRoad)"/>
+      <path d="M250,600 L370,320 L430,320 L550,600 Z" fill="#241f14" opacity="0.9"/>
+      <line x1="400" y1="600" x2="400" y2="330" stroke="#e3a63d" stroke-width="6" stroke-dasharray="24 30" opacity="0.7">
+        <animate attributeName="y1" values="600;570" dur="0.6s" repeatCount="indefinite"/>
+      </line>
+      <g opacity="0.5" fill="#7c8a5a">
+        <circle cx="140" cy="340" r="24"/>
+        <circle cx="660" cy="330" r="30"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- CITY LIGHTS -->
+  <div class="scene" data-mood="citylights">
+    <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+      <rect width="800" height="600" fill="#14110c"/>
+      <g>
+        <rect x="40" y="200" width="70" height="330" fill="#1c1810"/>
+        <rect x="130" y="120" width="90" height="410" fill="#241f14"/>
+        <rect x="240" y="250" width="60" height="280" fill="#1c1810"/>
+        <rect x="520" y="180" width="80" height="350" fill="#241f14"/>
+        <rect x="620" y="260" width="70" height="270" fill="#1c1810"/>
+        <rect x="700" y="150" width="90" height="380" fill="#241f14"/>
+      </g>
+      <g fill="#e3a63d" opacity="0.75">
+        <circle cx="60" cy="230" r="3"><animate attributeName="opacity" values="0.8;0.2;0.8" dur="3s" repeatCount="indefinite"/></circle>
+        <circle cx="85" cy="270" r="3"><animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.4s" repeatCount="indefinite"/></circle>
+        <circle cx="150" cy="160" r="3"><animate attributeName="opacity" values="0.9;0.3;0.9" dur="4s" repeatCount="indefinite"/></circle>
+        <circle cx="180" cy="220" r="3"><animate attributeName="opacity" values="0.4;0.9;0.4" dur="3.4s" repeatCount="indefinite"/></circle>
+        <circle cx="545" cy="220" r="3"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.8s" repeatCount="indefinite"/></circle>
+        <circle cx="640" cy="300" r="3"><animate attributeName="opacity" values="0.3;0.85;0.3" dur="3.6s" repeatCount="indefinite"/></circle>
+        <circle cx="730" cy="190" r="3"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="2.6s" repeatCount="indefinite"/></circle>
+      </g>
+      <rect x="0" y="500" width="800" height="100" fill="#0d0b07"/>
+    </svg>
+  </div>
+</div>
+
+<div id="grain"></div>
+<div id="vignette"></div>
+
+<div class="topbar">
+  <div class="chip">🕒 <strong id="ist-clock">--:--</strong><span id="ist-date" style="opacity:0.7"></span></div>
+  <div class="chip"><span class="dot"></span> <strong id="passenger-count">—</strong> riding now</div>
+</div>
+
+<div class="hero" id="hero">
+  <div class="kicker">OMNIVAN NOSTALGIA</div>
+  <h1>School Din,<br>Wahi Gaana</h1>
+  <p class="sub">Front seat, side door sliding shut, dusty AM radio. Hop in — the ride starts with the sound of the street before the song takes over.</p>
+  <button class="cta" id="start-ride">🚐 Start the Ride</button>
+</div>
+
+<div id="nowplaying">
+  <div id="np-movie">—</div>
+  <div id="np-title">—</div>
+  <div id="np-artist">—</div>
+  <div id="np-mood">scene: road</div>
+</div>
+
+<div id="yt-mount"></div>
+
+<div class="toast" id="toast"></div>
+
+<div id="dock">
+  <div class="dock-row">
+    <button class="iconbtn" id="prevbtn" aria-label="Previous">⏮</button>
+    <button class="iconbtn" id="playbtn" aria-label="Play">▶</button>
+    <button class="iconbtn" id="nextbtn" aria-label="Next">⏭</button>
+    <div class="dock-info">
+      <div class="t" id="dock-title">Pick a track to ride with</div>
+      <div class="s" id="dock-sub">Tap the drawer below</div>
+    </div>
+  </div>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+  <div id="drawer-toggle"><div class="handle"></div></div>
+
+  <div id="drawer">
+    <div class="drawer-inner">
+      <div class="volrow">
+        <span style="font-size:12px;color:var(--text-dim);">🔊</span>
+        <input type="range" id="volume" min="0" max="100" value="70">
+      </div>
+
+      <div class="section-label">Featured — ready to wire up</div>
+      <div id="track-list-featured"></div>
+
+      <div class="section-label">More from the tape</div>
+      <div id="track-list-more"></div>
+
+      <div class="section-label">Play any track</div>
+      <div class="custom-url">
+        <input type="text" id="custom-url" placeholder="Paste a YouTube link or video ID…">
+        <button id="custom-go">Ride</button>
+      </div>
+      <div class="hint">Songs aren't preloaded — paste each one's YouTube link once and it's remembered on this device. Tap "🔗" next to a track to attach its link.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MOODS = ["sunset","rain","eyes","road","citylights"];
+
+  var PLAYLIST = [
+    { id:"iktara", title:"Iktara", artist:"Kavita Seth, Amitabh Bhattacharya", movie:"Wake Up Sid", moods:["sunset","eyes","road","citylights"], featured:true },
+    { id:"tujaanena", title:"Tu Jaane Na", artist:"KK", movie:"Ajab Prem Ki Ghazab Kahani", moods:["rain","eyes","road","sunset"], featured:true },
+    { id:"sunshine", title:"Give Me Some Sunshine", artist:"Vishal–Shekhar, Rachel Varghese", movie:"3 Idiots", moods:["rain","sunset","eyes","road"], featured:true },
+    { id:"aditi", title:"Kabhi Kabhi Aditi", artist:"Rashid Ali", movie:"Jaane Tu... Ya Jaane Na", moods:["road","eyes","citylights","sunset"], featured:true },
+    { id:"aahun", title:"Aahun Aahun", artist:"Shalmali Kholgade, Sunidhi Chauhan", movie:"Cocktail", moods:["citylights","road","eyes","sunset"], featured:false },
+    { id:"emptiness", title:"Emptiness", artist:"Amit Trivedi", movie:"Development", moods:["rain","citylights","road","eyes"], featured:false },
+    { id:"baby", title:"Baby", artist:"Various", movie:"Playlist favourite", moods:["citylights","road","sunset","eyes"], featured:false },
+    { id:"phirse", title:"Phir Se Ud Chala", artist:"Mohit Chauhan", movie:"Rockstar", moods:["sunset","road","citylights","rain"], featured:false }
+  ];
+
+  var STORE_KEY = "omnivan_ytids_v1";
+  var savedIds = {};
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) savedIds = JSON.parse(raw);
+  } catch(e) { savedIds = {}; }
+
+  function saveIds(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(savedIds)); } catch(e) {}
+  }
+
+  function extractYouTubeId(input){
+    if (!input) return null;
+    input = input.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+    var m = input.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  // ---------------- Toast ----------------
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+  function toast(msg, ms){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, ms || 2600);
+  }
+
+  // ---------------- Clock ----------------
+  function tickClock(){
+    var now = new Date();
+    var time = now.toLocaleTimeString("en-IN", { timeZone:"Asia/Kolkata", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true });
+    var date = now.toLocaleDateString("en-IN", { timeZone:"Asia/Kolkata", day:"2-digit", month:"short" });
+    document.getElementById("ist-clock").textContent = time;
+    document.getElementById("ist-date").textContent = " · " + date + " IST";
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ---------------- Passenger counter ----------------
+  var passengers = 180 + Math.floor(Math.random()*140);
+  var pEl = document.getElementById("passenger-count");
+  function renderPassengers(){
+    pEl.textContent = passengers.toLocaleString("en-IN");
+    pEl.classList.remove("bump");
+    void pEl.offsetWidth;
+    pEl.classList.add("bump");
+  }
+  renderPassengers();
+  function schedulePassengerTick(){
+    var delay = 3500 + Math.random()*4000;
+    setTimeout(function(){
+      var delta = Math.floor(Math.random()*5) - 1;
+      passengers = Math.max(42, passengers + delta);
+      renderPassengers();
+      schedulePassengerTick();
+    }, delay);
+  }
+  schedulePassengerTick();
+
+  // ---------------- Mood scenes ----------------
+  var sceneEls = {};
+  document.querySelectorAll(".scene").forEach(function(el){
+    sceneEls[el.getAttribute("data-mood")] = el;
+  });
+  var currentMood = "road";
+  function setMood(mood){
+    if (!sceneEls[mood] || mood === currentMood) return;
+    sceneEls[currentMood] && sceneEls[currentMood].classList.remove("active");
+    sceneEls[mood].classList.add("active");
+    currentMood = mood;
+    document.getElementById("np-mood").textContent = "scene: " + mood;
+  }
+  var moodTimer = null;
+  function startMoodRotation(track, intervalMs){
+    clearInterval(moodTimer);
+    var list = (track && track.moods) || MOODS;
+    var i = 0;
+    setMood(list[0]);
+    moodTimer = setInterval(function(){
+      i = (i+1) % list.length;
+      setMood(list[i]);
+    }, intervalMs || 17000);
+  }
+  function stopMoodRotation(){
+    clearInterval(moodTimer);
+  }
+  // Idle rotation starts right away so the background is visibly alive
+  // even before any track is linked/playing. A playing track later
+  // takes over with its own mood sequence (see playTrack()).
+  startMoodRotation({ moods: MOODS }, 9000);
+
+  // ---------------- Ambient "van dialogue" bed (procedural, no copyrighted audio) ----------------
+  var actx = null, ambientGain = null, ambientNodes = [];
+  function ensureAudioCtx(){
+    if (actx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    actx = new AC();
+
+    var bufferSize = 2 * actx.sampleRate;
+    var noiseBuffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+    var data = noiseBuffer.getChannelData(0);
+    var lastOut = 0;
+    for (var i=0; i<bufferSize; i++){
+      var white = Math.random()*2-1;
+      lastOut = (lastOut + (0.02*white)) / 1.02;
+      data[i] = lastOut * 3.2;
+    }
+    var noise = actx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    noise.loop = true;
+
+    var noiseFilter = actx.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.value = 400;
+
+    var hum = actx.createOscillator();
+    hum.type = "sine";
+    hum.frequency.value = 92;
+    var humGain = actx.createGain();
+    humGain.gain.value = 0.05;
+
+    ambientGain = actx.createGain();
+    ambientGain.gain.value = 0.0001;
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(ambientGain);
+    hum.connect(humGain);
+    humGain.connect(ambientGain);
+    ambientGain.connect(actx.destination);
+
+    noise.start();
+    hum.start();
+    ambientNodes = [noise, hum];
+  }
+  function rampAmbient(target, seconds){
+    if (!actx) return;
+    var now = actx.currentTime;
+    ambientGain.gain.cancelScheduledValues(now);
+    ambientGain.gain.setValueAtTime(ambientGain.gain.value, now);
+    ambientGain.gain.linearRampToValueAtTime(Math.max(target,0.0001), now + seconds);
+  }
+
+  // ---------------- YouTube (postMessage control, no external script needed) ----------------
+  var ytFrame = null;
+  var ytReady = false;
+  var ytVolRampTimer = null;
+
+  function ytCommand(func, args){
+    if (!ytFrame || !ytFrame.contentWindow) return;
+    ytFrame.contentWindow.postMessage(JSON.stringify({ event:"command", func:func, args: args || [] }), "*");
+  }
+
+  function mountYouTube(videoId){
+    var mount = document.getElementById("yt-mount");
+    mount.innerHTML = "";
+    ytReady = false;
+    var iframe = document.createElement("iframe");
+    iframe.setAttribute("width","1");
+    iframe.setAttribute("height","1");
+    iframe.setAttribute("frameborder","0");
+    iframe.setAttribute("allow","autoplay; encrypted-media");
+    iframe.src = "https://www.youtube.com/embed/" + videoId + "?enablejsapi=1&autoplay=1&playsinline=1&controls=0&modestbranding=1&rel=0";
+    mount.appendChild(iframe);
+    ytFrame = iframe;
+    iframe.addEventListener("load", function(){
+      ytReady = true;
+      ytCommand("setVolume", [0]);
+    });
+  }
+
+  function crossfadeIntoSong(){
+    ensureAudioCtx();
+    if (actx.state === "suspended") actx.resume();
+    rampAmbient(0.28, 0.05);
+    var duration = 8000;
+    var start = null;
+    ytCommand("setVolume", [0]);
+    ytCommand("playVideo");
+    clearInterval(ytVolRampTimer);
+    ytVolRampTimer = setInterval(function(){
+      if (start === null) start = Date.now();
+      var t = Math.min(1, (Date.now() - start) / duration);
+      ytCommand("setVolume", [Math.round(t * targetVolume())]);
+      if (t >= 1) clearInterval(ytVolRampTimer);
+    }, 200);
+    rampAmbient(0.06, 8);
+  }
+
+  function targetVolume(){
+    return parseInt(document.getElementById("volume").value, 10);
+  }
+
+  window.addEventListener("message", function(ev){
+    try {
+      var data = JSON.parse(ev.data);
+      if (data.event === "onStateChange"){
+        if (data.info === 0) { // ended -> next track
+          playNext();
+        }
+      }
+    } catch(e) {}
+  });
+
+  // ---------------- Player state ----------------
+  var current = null; // track object
+  var isPlaying = false;
+  var progressTimer = null;
+
+  function findTrack(id){
+    for (var i=0;i<PLAYLIST.length;i++) if (PLAYLIST[i].id === id) return PLAYLIST[i];
+    return null;
+  }
+
+  function updateDock(){
+    var titleEl = document.getElementById("dock-title");
+    var subEl = document.getElementById("dock-sub");
+    var playBtn = document.getElementById("playbtn");
+    if (current){
+      titleEl.textContent = current.title;
+      subEl.textContent = current.artist + " · " + current.movie;
+      playBtn.textContent = isPlaying ? "⏸" : "▶";
+      document.getElementById("np-movie").textContent = current.movie;
+      document.getElementById("np-title").textContent = current.title;
+      document.getElementById("np-artist").textContent = current.artist;
+    } else {
+      titleEl.textContent = "Pick a track to ride with";
+      subEl.textContent = "Tap the drawer below";
+      playBtn.textContent = "▶";
+    }
+  }
+
+  function playTrack(track){
+    var vid = savedIds[track.id];
+    if (!vid){
+      openDrawer(true);
+      var input = document.getElementById("custom-url");
+      input.value = "";
+      input.placeholder = "Paste the YouTube link for \"" + track.title + "\"…";
+      input.dataset.pendingTrack = track.id;
+      input.focus();
+      toast("No link saved yet for \"" + track.title + "\" — paste one below to ride with it.", 3600);
+      return;
+    }
+    current = track;
+    highlightPlaying();
+    updateDock();
+    mountYouTube(vid);
+    startMoodRotation(track);
+    isPlaying = true;
+    updateDock();
+    setTimeout(crossfadeIntoSong, 350);
+    startProgressFallback();
+    document.getElementById("hero").classList.add("hidden");
+    document.getElementById("nowplaying").classList.add("show");
+  }
+
+  function togglePlay(){
+    if (!current){
+      var first = PLAYLIST.filter(function(t){ return savedIds[t.id]; })[0] || PLAYLIST[0];
+      playTrack(first);
+      return;
+    }
+    if (isPlaying){
+      ytCommand("pauseVideo");
+      rampAmbient(0.9, 1.2);
+      isPlaying = false;
+    } else {
+      ytCommand("playVideo");
+      rampAmbient(0.06, 0.8);
+      isPlaying = true;
+    }
+    updateDock();
+  }
+
+  function step(delta){
+    var idx = current ? PLAYLIST.indexOf(current) : -1;
+    var n = PLAYLIST.length;
+    var next = PLAYLIST[(idx + delta + n) % n];
+    playTrack(next);
+  }
+  function playNext(){ step(1); }
+  function playPrev(){ step(-1); }
+
+  function startProgressFallback(){
+    clearInterval(progressTimer);
+    var bar = document.getElementById("progress-bar");
+    var pct = 0;
+    bar.style.width = "0%";
+    progressTimer = setInterval(function(){
+      if (!isPlaying) return;
+      pct = (pct + 0.4) % 100;
+      bar.style.width = pct + "%";
+    }, 800);
+  }
+
+  // ---------------- Drawer + list rendering ----------------
+  var drawer = document.getElementById("drawer");
+  function openDrawer(open){
+    drawer.classList.toggle("open", open);
+  }
+  document.getElementById("drawer-toggle").addEventListener("click", function(){
+    openDrawer(!drawer.classList.contains("open"));
+  });
+
+  function trackRow(track, index){
+    var row = document.createElement("div");
+    row.className = "track";
+    row.dataset.id = track.id;
+    var has = !!savedIds[track.id];
+    row.innerHTML =
+      '<div class="num">' + (index+1) + '</div>' +
+      '<div class="meta"><div class="tt"></div><div class="mm"></div></div>' +
+      '<div class="badge ' + (has ? "ready" : "") + '">' + (has ? "ready" : "🔗 link") + '</div>';
+    row.querySelector(".tt").textContent = track.title;
+    row.querySelector(".mm").textContent = track.artist + " — " + track.movie;
+    row.addEventListener("click", function(e){
+      if (e.target.classList.contains("badge") && !has){
+        promptForLink(track);
+        return;
+      }
+      playTrack(track);
+    });
+    return row;
+  }
+
+  function promptForLink(track){
+    var input = document.getElementById("custom-url");
+    input.value = "";
+    input.placeholder = "Paste the YouTube link for \"" + track.title + "\"…";
+    input.dataset.pendingTrack = track.id;
+    input.focus();
+  }
+
+  function renderLists(){
+    var feat = document.getElementById("track-list-featured");
+    var more = document.getElementById("track-list-more");
+    feat.innerHTML = ""; more.innerHTML = "";
+    PLAYLIST.forEach(function(t, i){
+      var row = trackRow(t, i);
+      if (t.featured) feat.appendChild(row); else more.appendChild(row);
+    });
+  }
+  function highlightPlaying(){
+    document.querySelectorAll(".track").forEach(function(el){
+      el.classList.toggle("playing", current && el.dataset.id === current.id);
+    });
+  }
+  renderLists();
+
+  document.getElementById("custom-go").addEventListener("click", submitCustomLink);
+  document.getElementById("custom-url").addEventListener("keydown", function(e){
+    if (e.key === "Enter") submitCustomLink();
+  });
+  function submitCustomLink(){
+    var input = document.getElementById("custom-url");
+    var id = extractYouTubeId(input.value);
+    if (!id){
+      toast("That doesn't look like a valid YouTube link or ID.", 2600);
+      return;
+    }
+    var pending = input.dataset.pendingTrack;
+    var track = pending ? findTrack(pending) : null;
+    if (!track){
+      track = { id:"custom-"+id, title:"Custom track", artist:"Your pick", movie:"Added by you", moods: MOODS, featured:false };
+      if (!findTrack(track.id)){
+        PLAYLIST.push(track);
+        renderLists();
+      }
+    }
+    savedIds[track.id] = id;
+    saveIds();
+    input.value = "";
+    input.dataset.pendingTrack = "";
+    input.placeholder = "Paste a YouTube link or video ID…";
+    renderLists();
+    toast("Linked! Playing \"" + track.title + "\" now.", 2200);
+    playTrack(track);
+  }
+
+  // ---------------- Controls ----------------
+  document.getElementById("playbtn").addEventListener("click", togglePlay);
+  document.getElementById("nextbtn").addEventListener("click", playNext);
+  document.getElementById("prevbtn").addEventListener("click", playPrev);
+  document.getElementById("volume").addEventListener("input", function(){
+    if (isPlaying && ytReady) ytCommand("setVolume", [targetVolume()]);
+  });
+  document.getElementById("start-ride").addEventListener("click", function(){
+    var firstWithLink = PLAYLIST.filter(function(t){ return savedIds[t.id]; })[0];
+    if (firstWithLink){
+      playTrack(firstWithLink);
+    } else {
+      document.getElementById("hero").classList.add("hidden");
+      document.getElementById("nowplaying").classList.add("show");
+      openDrawer(true);
+      toast("Paste a YouTube link for any track below to start riding.", 3200);
+    }
+  });
+
+  updateDock();
+})();
+</script>
+</body>
+</html>
